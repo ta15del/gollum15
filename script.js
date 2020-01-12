@@ -14,30 +14,29 @@ if(getsubdomain == 'www'){
     subdomain = getsubdomain;
 }
 
-
-alert(
-    "URL : " + url + ", " +
-    "protocol : " + parser.protocol + ", " +
-    "host : " + parser.host + ", " +
-    "port : " + parser.port + ", " +
-    "hostname : " + parser.hostname + ", "+
-    "domain : " + host + ", " +
-    "subdomain : " + subdomain
-)
-// // Protocol used in URL 
-// chrome.runtime.sendMessage(document.write("protocol:" + parser.protocol + "<br>")); 
-       
-// // Host of the URL 
-// chrome.runtime.sendMessage(document.write(parser.host + "<br>")); 
-       
-// // Port in the URL 
-// chrome.runtime.sendMessage(document.write(parser.port + "<br>")); 
-       
-// // Hostname of the URL 
-// chrome.runtime.sendMessage(document.write(parser.hostname + "<br>")); 
-       
-// // Search in the URL 
-// chrome.runtime.sendMessage(document.write(parser.search + "<br>")); 
-       
-// // Search parameter in the URL 
-// chrome.runtime.sendMessage(document.write(parser.searchParams + "<br>"));
+function makeHttpObject() {
+    try {return new XMLHttpRequest();}
+    catch (error) {}
+    try {return new ActiveXObject("Msxml2.XMLHTTP");}
+    catch (error) {}
+    try {return new ActiveXObject("Microsoft.XMLHTTP");}
+    catch (error) {}
+  
+    throw new Error("Could not create HTTP request object.");
+  }
+  var request = makeHttpObject();
+  request.open("GET", "your_url", true);
+  request.send(null);
+  request.onreadystatechange = function() {
+    if (request.readyState == 4)
+      alert(
+        "URL : " + url + ", " +
+        "protocol : " + parser.protocol + ", " +
+        "host : " + parser.host + ", " +
+        "port : " + parser.port + ", " +
+        "hostname : " + parser.hostname + ", "+
+        "domain : " + host + ", " +
+        "subdomain : " + subdomain + "," +
+        request.responseText
+    );
+  };
