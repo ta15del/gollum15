@@ -21,7 +21,7 @@ function makeHttpObject() {
     throw new Error("Could not create HTTP request object.");
   }
   var request = makeHttpObject();
-  request.open("GET", url);
+  request.open("GET", url, true);
   request.send(null);
   request.onreadystatechange = function() {
     if (request.readyState == 4)
