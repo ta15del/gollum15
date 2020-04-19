@@ -41,9 +41,9 @@ async function DOM_parser(){
     return { string: string, dom: dom }
 }
 
-function URLofAnchor(parser){
+function URLofAnchor_CrossSite(parser){
     const anchors = parser.getElementsByTagName('a');
-    let count_phish = 0;
+    let count_anchor_crossSite = 0;
     for (let anchor of anchors) {
         let href = anchor.attributes.href;
         if (href){
@@ -52,44 +52,44 @@ function URLofAnchor(parser){
                 var url_domain = domainURL(url);
                 var getDomainFromAnchor = domainURL(href.value);
                 if (getDomainFromAnchor != url_domain){
-                    count_phish = count_phish + 1;
+                    count_anchor_crossSite = count_anchor_crossSite + 1;
                 }
             }             
         }
     }
-    var percent_urlOfAnchorPhish = (count_phish/anchors.length)*100;
-    if (percent_urlOfAnchorPhish > 67){
-        urlOfAnchorPhish = 'lebih dari 67%';
-    } else if (percent_urlOfAnchorPhish <= 67 && percent_urlOfAnchorPhish >= 31){
-        urlOfAnchorPhish = 'diantara 31% - 67%';
+    var percent_urlOfAnchorCrossSite = (count_anchor_crossSite/anchors.length)*100;
+    if (percent_urlOfAnchorCrossSite > 67){
+        urlOfAnchorCrossSite = 'lebih dari 67%';
+    } else if (percent_urlOfAnchorCrossSite <= 67 && percent_urlOfAnchorCrossSite >= 31){
+        urlOfAnchorCrossSite = 'diantara 31% - 67%';
     } else {
-        urlOfAnchorPhish = 'dibawah 31%';
+        urlOfAnchorCrossSite = 'dibawah 31%';
     }
-    return (urlOfAnchorPhish);
+    return (urlOfAnchorCrossSite);
 }
 
 function faviconRedirection(parser){
     try {
         const favicon = parser.querySelector('link[rel="shortcut icon"], link[rel="icon"]').href;
-        
+
         var getDomainFromFavicon = domainURL(favicon);
         var url_domain = domainURL(url);
         if (getDomainFromFavicon != url_domain){
-            faviconPhish = 'cross site';
+            favicon_redirection = 'cross site';
         } else {
-            faviconPhish = 'on site';
+            favicon_redirection = 'on site';
         }
     } catch(err){
         console.log(err);
     }
-   return (faviconPhish);
+   return (favicon_redirection);
 }
 
-function prefixSuffix(url_parser) {
+function prefixSuffix_inDomain(url_parser) {
     try {
         var res = url_parser.match(/^(http(s)?:\/\/.)?(www\.)?[a-zA-Z0-9@:%._\+~#=]*\-[a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
         result = (res !== null);
-        var prefixsuffix = "";
+
         if (result == true){
             prefixsuffix = "menggunakan";
         } else {
@@ -99,9 +99,9 @@ function prefixSuffix(url_parser) {
     } catch(err){
         console.log(err);
     }
-};
+}
 
-function ipAddress(url_parser) {
+function ipAddress_inDomain(url_parser) {
     try { 
         var res = url_parser.match(/^(http(s)?:\/\/.)?(www\.)?[0-9]*\.[0-9]*\.[0-9]*\.[0-9.]*[a-zA-Z0-9@:%_\+.~#?&//=]*/g);
         result = (res !== null);
@@ -118,13 +118,13 @@ function ipAddress(url_parser) {
 }
 
 function iframeRedirection(parser){
-    const iframe = parser.getElementsByTagName('iframe');
-    if (iframe.length != 0){
-        iframePhish = 'menggunakan';
+    const getIframe = parser.getElementsByTagName('iframe');
+    if (getIframe.length != 0){
+        iframe = 'menggunakan';
     } else {
-        iframePhish = 'tidak menggunakan';
+        iframe = 'tidak menggunakan';
     }
-    return (iframePhish);
+    return (iframe);
 }
 
 function linksInTags(parser){
@@ -134,36 +134,36 @@ function linksInTags(parser){
     var all_elements = parser.getElementsByTagName ('*');
     let percent_linkInTags = (count_linkInTags/all_elements.length)*100;
     if (percent_linkInTags > 81){
-        linkInTagsPhish = 'lebih dari 81%';
+        linkInTags = 'lebih dari 81%';
     } else if (percent_linkInTags <= 81 && percent_linkInTags >= 17) {
-        linkInTagsPhish = 'diantara 17% - 81%';
+        linkInTags = 'diantara 17% - 81%';
     } else {
-        linkInTagsPhish = 'dibawah 17%';
+        linkInTags = 'dibawah 17%';
     }
-    return (linkInTagsPhish);
+    return (linkInTags);
 }
 
-function findMailto(string) {
+function submittingInformationToEmail(string) {
     var getStringMailto = string.match(/[-a-zA-Z0-9@:%._\+~#= ]*mailto[-a-zA-Z0-9@:%._\+~#= ]*/);
     resp = (getStringMailto !== null);
     if (resp == true){
-        mailtoPhish = "menggunakan fungsi mailto";
+        mailto = "menggunakan fungsi mailto";
     } else {
-        mailtoPhish = "tidak menggunakan fungsi mailto";
+        mailto = "tidak menggunakan fungsi mailto";
     }
-    return (mailtoPhish);
+    return (mailto);
 }
 
 function numberOfImages(parser){
     const images = parser.getElementsByTagName('img');
     if (images.length > 20){
-        imagesPhish = 'lebih dari 20';
+        numbOfimages = 'lebih dari 20';
     } else if (images.length <= 20 && images.length > 10){
-        imagesPhish = 'diantara 10 - 20';
+        numbOfimages = 'diantara 10 - 20';
     } else {
-        imagesPhish = 'dibawah 11';
+        numbOfimages = 'dibawah 11';
     }
-    return (imagesPhish);
+    return (numbOfimages);
 }
 
 async function connection(url){
@@ -172,9 +172,9 @@ async function connection(url){
     return commits;
 }
 
-async function domainRegistration(){
-    let domain = "";
+async function domainRegistrationLength(){
     let domainInfo = await connection(apiWHOIS + parser.hostname);
+
     var dateFirst = new Date(domainInfo.WhoisRecord.registryData.updatedDate);
     var dateSecond = new Date(domainInfo.WhoisRecord.registryData.expiresDate);
     var timeDiff = Math.abs(dateSecond.getTime() - dateFirst.getTime());
@@ -188,8 +188,8 @@ async function domainRegistration(){
 }
 
 async function ageOfDomain(){
-    let ageDomain ="";
     let ageOfDomainInfo = await connection(apiWHOIS + parser.hostname);
+
     var dateFirst = new Date(ageOfDomainInfo.WhoisRecord.registryData.updatedDate);
     var dateSecond = new Date();
     var timeDiff = Math.abs(dateSecond.getTime() - dateFirst.getTime());
@@ -203,8 +203,8 @@ async function ageOfDomain(){
 }
 
 async function httpsLookup(){
-    let httpslookup = "";
     let httpsLookupInfo = await connection(apiHTTPSLookup + parser.hostname);
+
     if (httpsLookupInfo['Failed'].length > 0 && httpsLookupInfo['Information'].length == 0) {
         httpslookup = "tidak memiliki";
     } else {
@@ -213,18 +213,18 @@ async function httpsLookup(){
     return httpslookup;
 }
 
-async function abnormalURL(){
-    let abnormalUrls = "";
-    let abnormalUrlInfo = await connection(apiWHOIS+ parser.hostname);
-    if (abnormalUrlInfo.WhoisRecord.dataError || abnormalUrlInfo.WhoisRecord.parseCode == 0) {
-        abnormalUrls = "tidak terdaftar";
+async function registrationURL_inWHOIS(){
+    let urlInWHOISInfo = await connection(apiWHOIS+ parser.hostname);
+
+    if (urlInWHOISInfo.WhoisRecord.dataError || urlInWHOISInfo.WhoisRecord.parseCode == 0) {
+        urlInWHOIS = "tidak terdaftar";
     } else {
-        abnormalUrls = "terdaftar";
+        urlInWHOIS = "terdaftar";
     }
-    return abnormalUrls;
+    return urlInWHOIS;
 }
 
-async function securityWOT(){
+async function securityWOT_status(){
     let WOTstatus = await fetch(apiWOT + parser.hostname + apiWOTkey)
         .then((response) => response.text())
         .then((responseText) => {
@@ -240,9 +240,9 @@ async function securityWOT(){
             }); 
             
             if (found){
-                return ("memiliki");
+                return ("aman");
             } else {
-                return ("tidak memiliki");
+                return ("tidak aman");
             }
         })
         .catch((error) => {
@@ -251,9 +251,9 @@ async function securityWOT(){
     return WOTstatus;
 }
 
-function longURL(){
-    let longurl = "";
+function longURLCharacter(){
     var longCharacters = url.length;
+
     if (longCharacters > 75){
         longurl = "panjang";
     } else if (longCharacters <= 75 && longCharacters >= 54){
@@ -265,14 +265,14 @@ function longURL(){
 }
 
 function requestURL(parser){
-    let requestUrl = "";
     const images = parser.getElementsByTagName('img');
     const videos = parser.getElementsByTagName('video');
     const audios = parser.getElementsByTagName('audio');
+    
     var total_request = images.length + videos.length + audios.length;
-    let count_img_phish = 0;
-    let count_video_phish = 0;
-    let count_audio_phish = 0;
+    let count_img_crossSite = 0;
+    let count_video_crossSite = 0;
+    let count_audio_crossSite = 0;
 
     for (let image of images) {
         let img_src = image.attributes.src;
@@ -282,7 +282,7 @@ function requestURL(parser){
                 var url_domain = domainURL(url);
                 var getDomainFromImg = domainURL(img_src.value);
                 if (getDomainFromImg != url_domain){
-                    count_img_phish = count_img_phish + 1;
+                    count_img_crossSite = count_img_crossSite + 1;
                 }
             }             
         }
@@ -296,7 +296,7 @@ function requestURL(parser){
                 var url_domain = domainURL(url);
                 var getDomainFromVideo = domainURL(video_src.value);
                 if (getDomainFromVideo != url_domain){
-                    count_video_phish = count_video_phish + 1;
+                    count_video_crossSite = count_video_crossSite + 1;
                 }
             }             
         }
@@ -310,17 +310,17 @@ function requestURL(parser){
                 var url_domain = domainURL(url);
                 var getDomainFromAudio = domainURL(audio_src.value);
                 if (getDomainFromAudio != url_domain){
-                    count_audio_phish = count_audio_phish + 1;
+                    count_audio_crossSite = count_audio_crossSite + 1;
                 }
             }             
         }
     }
 
-    var total_requestURL = ((count_img_phish + count_video_phish + count_audio_phish)/total_request)*100
-    if (total_requestURL > 61){
-        requestUrl = 'lebih dari 61%';
-    } else if (total_requestURL <= 61 && total_requestURL >= 22){
-        requestUrl = 'diantara 22% - 61%';
+    var total_requestURL_crossSite = ((count_img_crossSite + count_video_crossSite + count_audio_crossSite)/total_request)*100
+    if (total_requestURL_crossSite > 61){
+        requestUrl = 'lebih dari 65%';
+    } else if (total_requestURL_crossSite <= 61 && total_requestURL_crossSite >= 22){
+        requestUrl = 'diantara 22% - 65%';
     } else {
         requestUrl = 'dibawah 22%';
     }
@@ -330,6 +330,7 @@ function requestURL(parser){
 function numberOfSubdomain(){
     var count_subdomain = 0;
     var subDomainLenght = 0;
+
     var linkSplit = url.split("//");
     var linkSplitSubdomain = linkSplit[1].split(".").reverse();
 
@@ -348,26 +349,33 @@ function numberOfSubdomain(){
             count_subdomain=count_subdomain+1;
           }
     }
-    return (count_subdomain);
+    if (count_subdomain > 2){
+        numberOf_subdomain = 'lebih dari dua';
+    } else if (count_subdomain == 2){
+        numberOf_subdomain = 'dua';
+    } else {
+        numberOf_subdomain = 'kurang dari dua';
+    }
+    return (numberOf_subdomain);
 }
 
 (async () => {
     var all_features = [];
     let https_lookup = await httpsLookup();
-    let domain_registration_length = await domainRegistration();
+    let domain_registration_length = await domainRegistrationLength();
     let age_of_domain = await ageOfDomain();
-    let abnormal_URL = await abnormalURL();
-    let adding_prefix_suffix = prefixSuffix(parser.hostname);
-    let ip_address = ipAddress(parser.hostname);
+    let abnormal_URL = await registrationURL_inWHOIS();
+    let adding_prefix_suffix = prefixSuffix_inDomain(parser.hostname);
+    let ip_address = ipAddress_inDomain(parser.hostname);
     var dom = await DOM_parser();
-    let URL_of_anchor = URLofAnchor(dom.dom);
+    let URL_of_anchor = URLofAnchor_CrossSite(dom.dom);
     let favicon_redirection = faviconRedirection(dom.dom);
     let iframe_redirection = iframeRedirection(dom.dom);
     let links_in_tags = linksInTags(dom.dom);
-    let submitting_information_to_email = findMailto(dom.string);
+    let submitting_information_to_email = submittingInformationToEmail(dom.string);
     let number_of_images = numberOfImages(dom.dom);
-    let security_WOT = await securityWOT();
-    let long_URL = longURL();
+    let security_WOT = await securityWOT_status();
+    let long_URL = longURLCharacter();
     let request_URL = requestURL(dom.dom);
     let number_of_subdomain = numberOfSubdomain();
 
