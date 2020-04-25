@@ -85,14 +85,14 @@ function faviconRedirection(parser){
             favicon_redirection = 'on site';
         }
     } catch(err){
-        console.log(err);
+        favicon_redirection = 'on site';
     }
    return (favicon_redirection);
 }
 
 function prefixSuffix_inDomain(url_parser) {
     try {
-        var res = url_parser.match(/^(http(s)?:\/\/.)?(www\.)?[a-zA-Z0-9@:%._\+~#=]*\-[a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
+        var res = url_parser.match(/(http(s)?:\/\/.)?(www\.)?[a-zA-Z0-9@:%._\+~#=]*\-[a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
         result = (res !== null);
 
         if (result == true){
@@ -180,56 +180,72 @@ async function connection(url){
 async function domainRegistrationLength(){
     var domainurl = domainURL(url);
     let domainInfo = await connection(apiWHOIS + domainurl);
-
-    var dateFirst = new Date(domainInfo.WhoisRecord.registryData.updatedDate);
-    var dateSecond = new Date(domainInfo.WhoisRecord.registryData.expiresDate);
-    var timeDiff = Math.abs(dateSecond.getTime() - dateFirst.getTime());
-    var diffDays = (timeDiff / (1000 * 3600 * 24))/365;
-    if (diffDays > 1) {
-        domain = "<= 1 tahun";
+    if (domainInfo){
+        var dateFirst = new Date(domainInfo.WhoisRecord.registryData.updatedDate);
+        var dateSecond = new Date(domainInfo.WhoisRecord.registryData.expiresDate);
+        var timeDiff = Math.abs(dateSecond.getTime() - dateFirst.getTime());
+        var diffDays = (timeDiff / (1000 * 3600 * 24))/365;
+        if (diffDays > 1) {
+            domain = "> 1 tahun";
+        } else {
+            domain = "<= 1 tahun";
+        }
     } else {
-        domain = "> 1 tahun" ;
+        domain = "<= 1 tahun";
     }
+    
     return domain;
 }
 
 async function ageOfDomain(){
     var domainurl = domainURL(url);
     let ageOfDomainInfo = await connection(apiWHOIS + domainurl);
-
-    var dateFirst = new Date(ageOfDomainInfo.WhoisRecord.registryData.updatedDate);
-    var dateSecond = new Date();
-    var timeDiff = Math.abs(dateSecond.getTime() - dateFirst.getTime());
-    var diffDays = (timeDiff / (1000 * 3600 * 24))/30;
-    if (diffDays < 6) {
-        ageDomain = "<= 5 bulan";
+    if (ageOfDomainInfo){
+        var dateFirst = new Date(ageOfDomainInfo.WhoisRecord.registryData.updatedDate);
+        var dateSecond = new Date();
+        var timeDiff = Math.abs(dateSecond.getTime() - dateFirst.getTime());
+        var diffDays = (timeDiff / (1000 * 3600 * 24))/30;
+        if (diffDays < 6) {
+            ageDomain = "<= 5 bulan";
+        } else {
+            ageDomain = "> 5 bulan";
+        }
     } else {
-        ageDomain = "> 5 bulan";
+        ageDomain = "<= 5 bulan";
     }
+    
     return ageDomain;
 }
 
 async function httpsLookup(){
     var domainurl = domainURL(url);
     let httpsLookupInfo = await connection(apiHTTPSLookup + domainurl);
-
-    if (httpsLookupInfo['Failed'].length > 0 && httpsLookupInfo['Information'].length == 0) {
-        httpslookup = "tidak memiliki";
+    if (httpsLookupInfo){
+        if (httpsLookupInfo['Failed'].length > 0 && httpsLookupInfo['Information'].length == 0) {
+            httpslookup = "tidak memiliki";
+        } else {
+            httpslookup = "memiliki";
+        }
     } else {
-        httpslookup = "memiliki";
+        httpslookup = "tidak memiliki";
     }
+    
     return httpslookup;
 }
 
 async function registrationURL_inWHOIS(){
     var domainurl = domainURL(url);
     let urlInWHOISInfo = await connection(apiWHOIS+ domainurl);
-
-    if (urlInWHOISInfo.WhoisRecord.dataError || urlInWHOISInfo.WhoisRecord.parseCode == 0) {
-        urlInWHOIS = "tidak terdaftar";
+    if (urlInWHOISInfo){
+        if (urlInWHOISInfo.WhoisRecord.dataError || urlInWHOISInfo.WhoisRecord.parseCode == 0) {
+            urlInWHOIS = "tidak terdaftar";
+        } else {
+            urlInWHOIS = "terdaftar";
+        }
     } else {
-        urlInWHOIS = "terdaftar";
+        urlInWHOIS = "tidak terdaftar";
     }
+    
     return urlInWHOIS;
 }
 
@@ -242,21 +258,27 @@ async function securityWOT_status(){
             var string = res.replace(')','');
             var obj = JSON.parse(string);
             var arr = [];
-            for (let [key, value] of Object.entries(obj[domainurl].categories)) {
-                arr.push(key);
-            }
-            var found = arr.find(function(key) { 
-                return (key == "301" || key == "302" || key == "303" || key == "304" || key == "501"); 
-            }); 
-            
-            if (found){
-                return ("aman");
+            if (obj[domainurl].categories){
+                for (let [key, value] of Object.entries(obj[domainurl].categories)) {
+                    arr.push(key);
+                }
+                var found = arr.find(function(key) { 
+                    return (key == "301" || key == "302" || key == "303" || key == "304" || key == "501"); 
+                }); 
+                
+                if (found){
+                    return ("aman");
+                } else {
+                    return ("tidak aman");
+                }
             } else {
                 return ("tidak aman");
             }
+            
         })
         .catch((error) => {
             console.error(error);
+            return ("tidak aman");
         });
     return WOTstatus;
 }
@@ -393,6 +415,7 @@ function isNumeric(n) {
   let number_of_subdomain = numberOfSubdomain();
 
   await all_features.push(favicon_redirection,request_URL,iframe,submitting_information_to_email,URL_of_anchor,number_of_images,security_WOT,links_in_tags,ip_address,long_URL,adding_prefix_suffix,number_of_subdomain,https_lookup,abnormal_URL,domain_registration_length,age_of_domain);
+  // console.log(all_features);
 
   await fileSystem.readFile('data_phishing_nonphishing.csv', 'utf-8', function(err, data) {
       if (err) {
