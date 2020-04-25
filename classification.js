@@ -1,14 +1,15 @@
-var C45 = require('c4.5');
-var fileSystem = require('fs');
-var CSVparser = require('papaparse');
+const C45 = require('c4.5');
+const fileSystem = require('fs');
+const CSVparser = require('papaparse');
+const swal = require('sweetalert2');
 
-var apiWHOIS = 'https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=[YOUR API KEY]&outputFormat=JSON&domainName='; 
-var apiHTTPSLookup = 'https://mxtoolbox.com/api/v1/lookup/HTTPS/';
-var apiWOT = 'https://api.mywot.com/0.4/public_link_json2?hosts=';
-var apiWOTkey = '/&callback=process&key=[YOUR API KEY]';
+const apiWHOIS = 'https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=[YOUR API KEY]&outputFormat=JSON&domainName='; 
+const apiHTTPSLookup = 'https://mxtoolbox.com/api/v1/lookup/HTTPS/';
+const apiWOT = 'https://api.mywot.com/0.4/public_link_json2?hosts=';
+const apiWOTkey = '/&callback=process&key=[YOUR API KEY]';
 
-var url =  window.location.href;
-var parser = new URL(url);
+const url =  window.location.href;
+const parser = new URL(url);
 
 function domainURL(link){
     var parser = new URL(link);
@@ -177,7 +178,8 @@ async function connection(url){
 }
 
 async function domainRegistrationLength(){
-    let domainInfo = await connection(apiWHOIS + parser.hostname);
+    var domainurl = domainURL(url);
+    let domainInfo = await connection(apiWHOIS + domainurl);
 
     var dateFirst = new Date(domainInfo.WhoisRecord.registryData.updatedDate);
     var dateSecond = new Date(domainInfo.WhoisRecord.registryData.expiresDate);
@@ -192,7 +194,8 @@ async function domainRegistrationLength(){
 }
 
 async function ageOfDomain(){
-    let ageOfDomainInfo = await connection(apiWHOIS + parser.hostname);
+    var domainurl = domainURL(url);
+    let ageOfDomainInfo = await connection(apiWHOIS + domainurl);
 
     var dateFirst = new Date(ageOfDomainInfo.WhoisRecord.registryData.updatedDate);
     var dateSecond = new Date();
@@ -207,7 +210,8 @@ async function ageOfDomain(){
 }
 
 async function httpsLookup(){
-    let httpsLookupInfo = await connection(apiHTTPSLookup + parser.hostname);
+    var domainurl = domainURL(url);
+    let httpsLookupInfo = await connection(apiHTTPSLookup + domainurl);
 
     if (httpsLookupInfo['Failed'].length > 0 && httpsLookupInfo['Information'].length == 0) {
         httpslookup = "tidak memiliki";
@@ -218,7 +222,8 @@ async function httpsLookup(){
 }
 
 async function registrationURL_inWHOIS(){
-    let urlInWHOISInfo = await connection(apiWHOIS+ parser.hostname);
+    var domainurl = domainURL(url);
+    let urlInWHOISInfo = await connection(apiWHOIS+ domainurl);
 
     if (urlInWHOISInfo.WhoisRecord.dataError || urlInWHOISInfo.WhoisRecord.parseCode == 0) {
         urlInWHOIS = "tidak terdaftar";
@@ -229,14 +234,15 @@ async function registrationURL_inWHOIS(){
 }
 
 async function securityWOT_status(){
-    let WOTstatus = await fetch(apiWOT + parser.hostname + apiWOTkey)
+    var domainurl = domainURL(url);
+    let WOTstatus = await fetch(apiWOT + domainurl + apiWOTkey)
         .then((response) => response.text())
         .then((responseText) => {
             var res = responseText.replace('process(','');
             var string = res.replace(')','');
             var obj = JSON.parse(string);
             var arr = [];
-            for (let [key, value] of Object.entries(obj[parser.hostname].categories)) {
+            for (let [key, value] of Object.entries(obj[domainurl].categories)) {
                 arr.push(key);
             }
             var found = arr.find(function(key) { 
@@ -387,24 +393,6 @@ function isNumeric(n) {
   let number_of_subdomain = numberOfSubdomain();
 
   await all_features.push(favicon_redirection,request_URL,iframe,submitting_information_to_email,URL_of_anchor,number_of_images,security_WOT,links_in_tags,ip_address,long_URL,adding_prefix_suffix,number_of_subdomain,https_lookup,abnormal_URL,domain_registration_length,age_of_domain);
-  console.log("URL hostname : " + parser.hostname);
-  console.log("HTTPS Lookup : " + https_lookup);
-  console.log("Domain Registration Length : " + domain_registration_length);
-  console.log("Age of Domain : " + age_of_domain);
-  console.log("Registration URL in WHOIS : " + abnormal_URL);
-  console.log("Prefix Suffix in Subdomain : " + adding_prefix_suffix);
-  console.log("IP Address in Domain : " + ip_address);
-  console.log("URL of Anchor Cross Site: " + URL_of_anchor);
-  console.log("Favicon Redirection: " + favicon_redirection);
-  console.log("Iframe: " + iframe);
-  console.log("Links In Tags : " + links_in_tags);
-  console.log("Submitting Information to Email : " + submitting_information_to_email);
-  console.log("Number of Images : " + number_of_images);
-  console.log("Security WOT Status: " + security_WOT);
-  console.log("Long URL Character: " + long_URL);
-  console.log("Request URL: " + request_URL);
-  console.log("Number of Subdomain: " + number_of_subdomain);
-  console.log(all_features);
 
   await fileSystem.readFile('data_phishing_nonphishing.csv', 'utf-8', function(err, data) {
       if (err) {
@@ -437,8 +425,16 @@ function isNumeric(n) {
           console.error(error);
         }
         var testData = all_features;
-        console.log('data test:\n' + testData +'\nhasil => ' + model.classify(testData));
-        alert(model.classify(testData));
+        if (model.classify(testData)=='phishing'){
+            swal.fire({
+                imageUrl: 'https://www.pngkey.com/png/full/881-8812373_open-warning-icon-png.png',
+                imageWidth: 50,
+                imageHeight: 50,
+                imageAlt: 'Custom image',
+                title: 'This is a fake website!',
+                text: "Please don't visit this website, it can steal your data."
+              })
+        }
       });
     }});
   });
