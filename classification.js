@@ -3,7 +3,7 @@ const fileSystem = require('fs');
 const CSVparser = require('papaparse');
 const swal = require('sweetalert2');
 
-const apiWHOIS = 'https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=[YOUR API KEY]&outputFormat=JSON&domainName='; 
+const apiWHOIS = 'https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=[YOUR API KEY]X&outputFormat=JSON&domainName='; 
 const apiHTTPSLookup = 'https://mxtoolbox.com/api/v1/lookup/HTTPS/';
 const apiWOT = 'https://api.mywot.com/0.4/public_link_json2?hosts=';
 const apiWOTkey = '/&callback=process&key=[YOUR API KEY]';
@@ -44,6 +44,10 @@ async function DOM_parser(){
             break;
     }
     return { string: string, dom: dom }
+}
+
+function isNumeric(n) {
+    return !isNaN(n);
 }
 
 function URLofAnchor_CrossSite(parser){
@@ -391,18 +395,16 @@ function numberOfSubdomain(){
     return (numberOf_subdomain);
 }
 
-function isNumeric(n) {
-  return !isNaN(n);
-}
 (async () => {
   var all_features = [];
+  var dom = await DOM_parser();
+
   let https_lookup = await httpsLookup();
   let domain_registration_length = await domainRegistrationLength();
   let age_of_domain = await ageOfDomain();
-  let abnormal_URL = await registrationURL_inWHOIS();
+  let registration_URL = await registrationURL_inWHOIS();
   let adding_prefix_suffix = prefixSuffix_inDomain(parser.hostname);
   let ip_address = ipAddress_inDomain(parser.hostname);
-  var dom = await DOM_parser();
   let URL_of_anchor = URLofAnchor_CrossSite(dom.dom);
   let favicon_redirection = faviconRedirection(dom.dom);
   let iframe = iFrame(dom.dom);
@@ -414,7 +416,9 @@ function isNumeric(n) {
   let request_URL = requestURL_CrossSite(dom.dom);
   let number_of_subdomain = numberOfSubdomain();
 
-  await all_features.push(favicon_redirection,request_URL,iframe,submitting_information_to_email,URL_of_anchor,number_of_images,security_WOT,links_in_tags,ip_address,long_URL,adding_prefix_suffix,number_of_subdomain,https_lookup,abnormal_URL,domain_registration_length,age_of_domain);
+  await all_features.push(favicon_redirection,request_URL,iframe,submitting_information_to_email,URL_of_anchor,number_of_images,
+    security_WOT,links_in_tags,ip_address,long_URL,adding_prefix_suffix,number_of_subdomain,https_lookup,registration_URL,
+    domain_registration_length,age_of_domain);
   // console.log(all_features);
 
   await fileSystem.readFile('data_phishing_nonphishing.csv', 'utf-8', function(err, data) {
@@ -438,22 +442,22 @@ function isNumeric(n) {
 
           var c45 = C45();
 
-      c45.train({
-        data: trainingData,
-        target: target,
-        features: features,
-        featureTypes: featureTypes
-      }, function(error, model) {
-        if (error) {
-          console.error(error);
-        }
-        var testData = all_features;
-        if (model.classify(testData)=='phishing'){
+        c45.train({
+            data: trainingData,
+            target: target,
+            features: features,
+            featureTypes: featureTypes
+         }, function(error, model) {
+            if (error) {
+            console.error(error);
+            }
+
+        if (model.classify(all_features)=='phishing'){
             swal.fire({
                 imageUrl: 'https://www.pngkey.com/png/full/881-8812373_open-warning-icon-png.png',
                 imageWidth: 50,
                 imageHeight: 50,
-                imageAlt: 'Custom image',
+                imageAlt: 'Image Warning',
                 title: 'This is a fake website!',
                 text: "Please don't visit this website, it can steal your data."
               })
