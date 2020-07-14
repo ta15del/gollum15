@@ -1,56 +1,16 @@
-const C45 = require('c4.5');
-const fileSystem = require('fs');
-const CSVparser = require('papaparse');
-const swal = require('sweetalert2');
-
-const apiWHOIS = 'https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=[YOUR API KEY]X&outputFormat=JSON&domainName='; 
-const apiHTTPSLookup = 'https://mxtoolbox.com/api/v1/lookup/HTTPS/';
-const apiWOT = 'https://api.mywot.com/0.4/public_link_json2?hosts=';
-const apiWOTkey = '/&callback=process&key=[YOUR API KEY]';
-
+const urlParser = require('./urlParser');
+const htmlParser = require('./htmlParser');
+const apiHTTPSLookup = require('./apiHTTPSLookup');
+const apiWHOIS = require('./apiWHOIS');
+const apiWOT = require('./apiWOT');
 const url =  window.location.href;
-const parser = new URL(url);
-
-function domainURL(link){
-    var parser = new URL(link);
-    var host = ''; 
-    var hn = parser.hostname.split('.').reverse();
-    if (hn[1] == 'co') {
-        host = hn[2] + '.' + hn[1] + '.' + hn[0];
-    } else {
-        host = hn[1] + '.' + hn[0];
-    }
-    return host; 
-}
 
 function isValidURL(string) {
     var res = string.match(/^(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
     return (res !== null);
 };
 
-async function DOM_parser(){
-    const parsers = new DOMParser();
-    var response = await fetch(url);
-    switch (response.status) {
-        // status "OK"
-        case 200:
-            var string = await response.text();
-            var dom = parsers.parseFromString(string, 
-                'text/html');
-            break;
-        // status "Not Found"
-        case 404:
-            console.log('Not Found');
-            break;
-    }
-    return { string: string, dom: dom }
-}
-
-function isNumeric(n) {
-    return !isNaN(n);
-}
-
-function URLofAnchor_CrossSite(parser){
+function URLofAnchor_CrossSite(parser, domainURL){
     const anchors = parser.getElementsByTagName('a');
     let count_anchor_crossSite = 0;
     for (let anchor of anchors) {
@@ -58,9 +18,8 @@ function URLofAnchor_CrossSite(parser){
         if (href){
             getDomainFromAnchor = isValidURL(href.value);
             if (getDomainFromAnchor == true){
-                var url_domain = domainURL(url);
-                var getDomainFromAnchor = domainURL(href.value);
-                if (getDomainFromAnchor != url_domain){
+                var getDomainFromAnchor = urlParser.domainURL(href.value);
+                if (getDomainFromAnchor != domainURL){
                     count_anchor_crossSite = count_anchor_crossSite + 1;
                 }
             }             
@@ -77,13 +36,11 @@ function URLofAnchor_CrossSite(parser){
     return (urlOfAnchorCrossSite);
 }
 
-function faviconRedirection(parser){
+function faviconRedirection(parser, domainURL){
     try {
         const favicon = parser.querySelector('link[rel="shortcut icon"], link[rel="icon"]').href;
-
-        var getDomainFromFavicon = domainURL(favicon);
-        var url_domain = domainURL(url);
-        if (getDomainFromFavicon != url_domain){
+        var getDomainFromFavicon = urlParser.domainURL(favicon);
+        if (getDomainFromFavicon != domainURL){
             favicon_redirection = 'cross site';
         } else {
             favicon_redirection = 'on site';
@@ -175,15 +132,7 @@ function numberOfImages(parser){
     return (numbOfimages);
 }
 
-async function connection(url){
-    let response = await fetch(url);   
-    let commits = await response.json(); // read response body and parse as JSON
-    return commits;
-}
-
-async function domainRegistrationLength(){
-    var domainurl = domainURL(url);
-    let domainInfo = await connection(apiWHOIS + domainurl);
+async function domainRegistrationLength(domainInfo){
     if (domainInfo){
         var dateFirst = new Date(domainInfo.WhoisRecord.registryData.updatedDate);
         var dateSecond = new Date(domainInfo.WhoisRecord.registryData.expiresDate);
@@ -201,9 +150,7 @@ async function domainRegistrationLength(){
     return domain;
 }
 
-async function ageOfDomain(){
-    var domainurl = domainURL(url);
-    let ageOfDomainInfo = await connection(apiWHOIS + domainurl);
+async function ageOfDomain(ageOfDomainInfo){
     if (ageOfDomainInfo){
         var dateFirst = new Date(ageOfDomainInfo.WhoisRecord.registryData.updatedDate);
         var dateSecond = new Date();
@@ -217,15 +164,13 @@ async function ageOfDomain(){
     } else {
         ageDomain = "<= 5 bulan";
     }
-    
+
     return ageDomain;
 }
 
-async function httpsLookup(){
-    var domainurl = domainURL(url);
-    let httpsLookupInfo = await connection(apiHTTPSLookup + domainurl);
+async function httpsLookup(httpsLookupInfo){
     if (httpsLookupInfo){
-        if (httpsLookupInfo['Failed'].length > 0 && httpsLookupInfo['Information'].length == 0) {
+        if (httpsLookupInfo['Passed'].length == 0 && httpsLookupInfo['Information'].length == 0) {
             httpslookup = "tidak memiliki";
         } else {
             httpslookup = "memiliki";
@@ -237,11 +182,9 @@ async function httpsLookup(){
     return httpslookup;
 }
 
-async function registrationURL_inWHOIS(){
-    var domainurl = domainURL(url);
-    let urlInWHOISInfo = await connection(apiWHOIS+ domainurl);
+async function registrationURL_inWHOIS(urlInWHOISInfo){
     if (urlInWHOISInfo){
-        if (urlInWHOISInfo.WhoisRecord.dataError || urlInWHOISInfo.WhoisRecord.parseCode == 0) {
+        if (urlInWHOISInfo.WhoisRecord.dataError == "IN_COMPLETE_DATA" || urlInWHOISInfo.WhoisRecord.parseCode == 0) {
             urlInWHOIS = "tidak terdaftar";
         } else {
             urlInWHOIS = "terdaftar";
@@ -253,43 +196,35 @@ async function registrationURL_inWHOIS(){
     return urlInWHOIS;
 }
 
-async function securityWOT_status(){
-    var domainurl = domainURL(url);
-    let WOTstatus = await fetch(apiWOT + domainurl + apiWOTkey)
-        .then((response) => response.text())
-        .then((responseText) => {
-            var res = responseText.replace('process(','');
-            var string = res.replace(')','');
-            var obj = JSON.parse(string);
-            var arr = [];
-            if (obj[domainurl].categories){
-                for (let [key, value] of Object.entries(obj[domainurl].categories)) {
-                    arr.push(key);
-                }
-                var found = arr.find(function(key) { 
-                    return (key == "301" || key == "302" || key == "303" || key == "304" || key == "501"); 
-                }); 
-                
-                if (found){
-                    return ("aman");
-                } else {
-                    return ("tidak aman");
-                }
-            } else {
-                return ("tidak aman");
+async function securityWOT_status(jsonWOT){
+    var arr = [];
+    if (jsonWOT){
+        if (jsonWOT[0].categories){
+            for (let key of jsonWOT[0].categories){
+                arr.push(key.id);
             }
+            var found = arr.find(function(key) { 
+                return (key == "301" || key == "302" || key == "303" || key == "304" || key == "501"); 
+            }); 
             
-        })
-        .catch((error) => {
-            console.error(error);
-            return ("tidak aman");
-        });
+            if (found){
+                WOTstatus = "aman";
+            } else {
+                WOTstatus = "tidak aman";
+            }
+        } else {
+            WOTstatus = "tidak aman";
+        }
+            
+    } else {
+        WOTstatus = "tidak aman";
+    }
+
     return WOTstatus;
 }
 
 function longURLCharacter(){
     var longCharacters = url.length;
-
     if (longCharacters > 75){
         longurl = "panjang";
     } else if (longCharacters <= 75 && longCharacters >= 54){
@@ -300,7 +235,7 @@ function longURLCharacter(){
     return longurl;
 }
 
-function requestURL_CrossSite(parser){
+function requestURL_CrossSite(parser, domainURL){
     const images = parser.getElementsByTagName('img');
     const videos = parser.getElementsByTagName('video');
     const audios = parser.getElementsByTagName('audio');
@@ -315,9 +250,8 @@ function requestURL_CrossSite(parser){
         if (img_src){
             getDomainFromImg = isValidURL(img_src.value);
             if (getDomainFromImg == true){
-                var url_domain = domainURL(url);
-                var getDomainFromImg = domainURL(img_src.value);
-                if (getDomainFromImg != url_domain){
+                var getDomainFromImg = urlParser.domainURL(img_src.value);
+                if (getDomainFromImg != domainURL){
                     count_img_crossSite = count_img_crossSite + 1;
                 }
             }             
@@ -329,9 +263,8 @@ function requestURL_CrossSite(parser){
         if (video_src){
             getDomainFromVideo = isValidURL(video_src.value);
             if (getDomainFromVideo == true){
-                var url_domain = domainURL(url);
-                var getDomainFromVideo = domainURL(video_src.value);
-                if (getDomainFromVideo != url_domain){
+                var getDomainFromVideo = urlParser.domainURL(video_src.value);
+                if (getDomainFromVideo != domainURL){
                     count_video_crossSite = count_video_crossSite + 1;
                 }
             }             
@@ -343,9 +276,8 @@ function requestURL_CrossSite(parser){
         if (audio_src){
             getDomainFromAudio = isValidURL(audio_src.value);
             if (getDomainFromAudio == true){
-                var url_domain = domainURL(url);
-                var getDomainFromAudio = domainURL(audio_src.value);
-                if (getDomainFromAudio != url_domain){
+                var getDomainFromAudio = urlParser.domainURL(audio_src.value);
+                if (getDomainFromAudio != domainURL){
                     count_audio_crossSite = count_audio_crossSite + 1;
                 }
             }             
@@ -395,74 +327,36 @@ function numberOfSubdomain(){
     return (numberOf_subdomain);
 }
 
-(async () => {
-  var all_features = [];
-  var dom = await DOM_parser();
+async function features(){
+    var dom = await htmlParser.DOM_parser(url);
+    var parser = urlParser.convertToURL(url);
+    var domain = urlParser.domainURL(url);
+    var api_whois = await apiWHOIS.connectionToWHOIS(domain);
+    var api_wot = await apiWOT.connectionToWOT(domain);
+    var api_https_lookup = await apiHTTPSLookup.connectionToHTTPSLookup (domain);
 
-  let https_lookup = await httpsLookup();
-  let domain_registration_length = await domainRegistrationLength();
-  let age_of_domain = await ageOfDomain();
-  let registration_URL = await registrationURL_inWHOIS();
-  let adding_prefix_suffix = prefixSuffix_inDomain(parser.hostname);
-  let ip_address = ipAddress_inDomain(parser.hostname);
-  let URL_of_anchor = URLofAnchor_CrossSite(dom.dom);
-  let favicon_redirection = faviconRedirection(dom.dom);
-  let iframe = iFrame(dom.dom);
-  let links_in_tags = linksInTags(dom.dom);
-  let submitting_information_to_email = submittingInformationToEmail(dom.string);
-  let number_of_images = numberOfImages(dom.dom);
-  let security_WOT = await securityWOT_status();
-  let long_URL = longURLCharacter();
-  let request_URL = requestURL_CrossSite(dom.dom);
-  let number_of_subdomain = numberOfSubdomain();
+    let https_lookup = await httpsLookup(api_https_lookup);
+    let domain_registration_length = await domainRegistrationLength(api_whois);
+    let age_of_domain = await ageOfDomain(api_whois);
+    let registration_URL = await registrationURL_inWHOIS(api_whois);
+    let security_WOT = await securityWOT_status(api_wot);
+    let adding_prefix_suffix = prefixSuffix_inDomain(parser.hostname);
+    let ip_address = ipAddress_inDomain(parser.hostname);
+    let URL_of_anchor = URLofAnchor_CrossSite(dom.dom, domain);
+    let favicon_redirection = faviconRedirection(dom.dom, domain);
+    let iframe = iFrame(dom.dom);
+    let links_in_tags = linksInTags(dom.dom);
+    let submitting_information_to_email = submittingInformationToEmail(dom.string);
+    let number_of_images = numberOfImages(dom.dom);
+    let long_URL = longURLCharacter();
+    let request_URL = requestURL_CrossSite(dom.dom, domain);
+    let number_of_subdomain = numberOfSubdomain();
 
-  await all_features.push(favicon_redirection,request_URL,iframe,submitting_information_to_email,URL_of_anchor,number_of_images,
-    security_WOT,links_in_tags,ip_address,long_URL,adding_prefix_suffix,number_of_subdomain,https_lookup,registration_URL,
-    domain_registration_length,age_of_domain);
-  // console.log(all_features);
+    var all_features = [];
+    await all_features.push(ip_address,submitting_information_to_email,adding_prefix_suffix,iframe,number_of_images,favicon_redirection,request_URL,
+        long_URL,links_in_tags,URL_of_anchor,number_of_subdomain,age_of_domain,https_lookup,registration_URL,domain_registration_length,security_WOT);
 
-  await fileSystem.readFile('data_phishing_nonphishing.csv', 'utf-8', function(err, data) {
-      if (err) {
-        console.error(err);
-        return false;
-      }
-      CSVparser.parse(data, {
-        complete: function(result) {
-          var headers = result.data[0];
-          var features = headers.slice(1,-1);
-          var target = headers[headers.length-1];
+    return all_features;
+}
 
-          var trainingData = result.data.slice(1).map(function(d) {
-            return d.slice(1);
-          });
-
-          var featureTypes = trainingData[0].map(function(d) {
-            return isNumeric(d) ? 'number' : 'category';
-          });
-
-          var c45 = C45();
-
-        c45.train({
-            data: trainingData,
-            target: target,
-            features: features,
-            featureTypes: featureTypes
-         }, function(error, model) {
-            if (error) {
-            console.error(error);
-            }
-
-        if (model.classify(all_features)=='phishing'){
-            swal.fire({
-                imageUrl: 'https://www.pngkey.com/png/full/881-8812373_open-warning-icon-png.png',
-                imageWidth: 50,
-                imageHeight: 50,
-                imageAlt: 'Image Warning',
-                title: 'This is a fake website!',
-                text: "Please don't visit this website, it can steal your data."
-              })
-        }
-      });
-    }});
-  });
-})();
+module.exports = { features };
