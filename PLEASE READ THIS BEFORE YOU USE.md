@@ -7,7 +7,7 @@ You must obtain an API key from each API.
 Please contact the developer to obtain further API and extension payment information.
 
 Developer e-mail
-Sartika : tikaarios01@gmail.com
+Sartika : sarika26arios@gmail.com
 Marcelino : marcelino14sirait@gmail.com
 Fransiska : fransiskasiburian1@gmail.com
 
