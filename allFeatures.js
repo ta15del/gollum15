@@ -3,7 +3,7 @@ const htmlParser = require('./htmlParser');
 const apiHTTPSLookup = require('./apiHTTPSLookup');
 const apiWHOIS = require('./apiWHOIS');
 const apiWOT = require('./apiWOT');
-const url =  window.location.href;
+
 
 function isValidURL(string) {
     var res = string.match(/^(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
@@ -51,7 +51,7 @@ function faviconRedirection(parser, domainURL){
    return (favicon_redirection);
 }
 
-function prefixSuffix_inDomain(url_parser) {
+function prefixSuffix_inDomain(url_parser) { 
     try {
         var res = url_parser.match(/(http(s)?:\/\/.)?(www\.)?[a-zA-Z0-9@:%._\+~#=]*\-[a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
         result = (res !== null);
@@ -223,7 +223,7 @@ async function securityWOT_status(jsonWOT){
     return WOTstatus;
 }
 
-function longURLCharacter(){
+function longURLCharacter(url){
     var longCharacters = url.length;
     if (longCharacters > 75){
         longurl = "panjang";
@@ -295,7 +295,7 @@ function requestURL_CrossSite(parser, domainURL){
     return (requestUrl);
 }
 
-function numberOfSubdomain(){
+function numberOfSubdomain(url){
     var count_subdomain = 0;
     var subDomainLenght = 0;
 
@@ -327,13 +327,17 @@ function numberOfSubdomain(){
     return (numberOf_subdomain);
 }
 
-async function features(){
+async function features(url){
     var dom = await htmlParser.DOM_parser(url);
     var parser = urlParser.convertToURL(url);
     var domain = urlParser.domainURL(url);
     var api_whois = await apiWHOIS.connectionToWHOIS(domain);
     var api_wot = await apiWOT.connectionToWOT(domain);
-    var api_https_lookup = await apiHTTPSLookup.connectionToHTTPSLookup (domain);
+    var api_https_lookup = await apiHTTPSLookup.connectionToHTTPSLookup (url);
+
+    // console.log(api_https_lookup);
+    // console.log(api_whois);
+    // console.log(api_wot);
 
     let https_lookup = await httpsLookup(api_https_lookup);
     let domain_registration_length = await domainRegistrationLength(api_whois);
@@ -348,9 +352,9 @@ async function features(){
     let links_in_tags = linksInTags(dom.dom);
     let submitting_information_to_email = submittingInformationToEmail(dom.string);
     let number_of_images = numberOfImages(dom.dom);
-    let long_URL = longURLCharacter();
+    let long_URL = longURLCharacter(url);
     let request_URL = requestURL_CrossSite(dom.dom, domain);
-    let number_of_subdomain = numberOfSubdomain();
+    let number_of_subdomain = numberOfSubdomain(url);
 
     var all_features = [];
     await all_features.push(ip_address,submitting_information_to_email,adding_prefix_suffix,iframe,number_of_images,favicon_redirection,request_URL,

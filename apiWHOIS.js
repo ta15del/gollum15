@@ -1,4 +1,4 @@
-const apiWHOIS = 'https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey="YOUR API KEY"&outputFormat=JSON&domainName=';
+const apiWHOIS = 'https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=at_hcFqkmueNVwugsdIeeXTOrGgOJIY7&outputFormat=JSON&domainName=';
 
 async function connectionToWHOIS(domain){
     let response = await fetch(apiWHOIS + domain);   
