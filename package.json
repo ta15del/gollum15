@@ -12,6 +12,7 @@
     "brfs": "^2.0.2",
     "browserify-fs": "^1.0.0",
     "c4.5": "0.0.3",
+    "file-saver": "^2.0.2",
     "fs": "0.0.1-security",
     "fs-extra": "^9.0.0",
     "papaparse": "^5.2.0",

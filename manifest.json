@@ -6,7 +6,8 @@
   "content_scripts":[
     {
       "matches" : ["<all_urls>"],
-      "js" : ["dist/classification.js"]
+      "js" : ["dist/auto_fetch_for_experiment.js"]
     }
   ]
 }
+
